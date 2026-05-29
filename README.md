@@ -21,7 +21,7 @@ Grădina ta are **4 straturi de pământ** disponibile. Pentru a planta semințe
 * **Recoltarea:** Când bara de sub plantă devine verde și scrie **`RDY`**, planta este matură. Ține apăsată tasta **`H`** (Harvest) + cifra stratului (ex: `H + 3`) pentru a culege ingredientul magic în inventar.
 
 ### Pasul 3: Craftarea Poțiunilor (Alchemy)
-Fiecare poțiune necesită **2/3/4 ingrediente identice** din stoc, în funcție de nivel. Pentru a combina ingredientele:
+Fiecare poțiune necesită **2/3 ingrediente identice** din stoc, în funcție de nivel. Pentru a combina ingredientele:
 * Ține apăsată tasta **`C`** (Craft) și apasă cifra corespunzătoare poțiunii:
   * `C + 1` ➡️ **Speed Potion** (necesită 2x Magic Carrot)
   * `C + 2` ➡️ **Fire Potion** (necesită 2x Magic Tomato)
