@@ -1,0 +1,20 @@
+{
+  "Gold": 50,
+  "Day": 1,
+  "Score": 0,
+  "HighScore": 10,
+  "ShopLevel": 1,
+  "PotionsCrafted": 4,
+  "CustomersServed": 0,
+  "Ingredients": {
+    "Magic Cabbage": 3,
+    "Magic Carrot": 2,
+    "Magic Tomato": 1
+  },
+  "PotionsInStock": [
+    "Speed Potion",
+    "Fire Potion",
+    "Sun Potion",
+    "Super Potion"
+  ]
+}
