@@ -1,4 +1,4 @@
-﻿// AI-generated
+﻿
 using Silk.NET.SDL;
 using TheAdventure;
 using TheAdventure.Models.Game;
@@ -206,4 +206,3 @@ unsafe
     sdl.DestroyWindow((Window*)window);
 }
 sdl.Quit();
-// end AI-generated

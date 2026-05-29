@@ -1,4 +1,4 @@
-// AI-generated
+
 using TheAdventure.Exceptions;
 using TheAdventure.Models.Game;
 using TheAdventure.Models.Plants;
@@ -16,7 +16,9 @@ public class GameLogic : IDisposable
     private readonly SaveManager _saveManager = new();
     private bool _disposed = false;
 
-    // REPARARE 1: Am adăugat înapoi proprietatea GardenBeds care lipsea!
+    // Numele fișierului în care salvăm cel mai bun scor
+    private const string HighScoreFile = "highscore.txt";
+
     public Plant?[] GardenBeds { get; } = new Plant?[4];
 
     private readonly Dictionary<string, int> _counts = new()
@@ -27,7 +29,6 @@ public class GameLogic : IDisposable
         { "Magic Cabbage", 0 }
     };
 
-    // Dicționar intern pentru urmărirea poțiunilor grupate
     private readonly Dictionary<string, int> _potionCounts = new()
     {
         { "Speed Potion", 0 },
@@ -38,9 +39,8 @@ public class GameLogic : IDisposable
 
     public List<Recipe> Recipes { get; } = new()
     {
-        // REPARARE 2: Păstrăm nuanțele, dar folosim instanțierea nativă pe care o recunoaște GameRenderer pentru culori
         new Recipe("Speed Potion", "Made with carrots", 80, (255, 140, 0), new Ingredient("Magic Carrot", 2)),
-        new Recipe("Fire Potion", "Made with tomatoes", 100, (255, 50, 50), new Ingredient("Magic Tomato", 2)), // Roșu aprins pentru tomate
+        new Recipe("Fire Potion", "Made with tomatoes", 100, (255, 50, 50), new Ingredient("Magic Tomato", 2)),
         new Recipe("Sun Potion", "Made with corn", 90, (255, 215, 0), new Ingredient("Magic Corn", 2)),
         new Recipe("Nature Potion", "Made with cabbage", 70, (0, 200, 100), new Ingredient("Magic Cabbage", 2))
     };
@@ -57,6 +57,20 @@ public class GameLogic : IDisposable
         foreach (var key in _potionCounts.Keys.ToList()) _potionCounts[key] = 0;
         _potionsInStock.Clear();
 
+        // ÎNCĂRCARE HIGH SCORE: Citim cel mai bun scor salvat anterior, dacă fișierul există
+        if (File.Exists(HighScoreFile))
+        {
+            try
+            {
+                string content = File.ReadAllText(HighScoreFile);
+                if (int.TryParse(content, out int savedHighScore))
+                {
+                    _state.HighScore = savedHighScore;
+                }
+            }
+            catch { }
+        }
+
         _state.Phase = GamePhase.Playing;
         SpawnCustomer();
     }
@@ -65,14 +79,12 @@ public class GameLogic : IDisposable
     {
         if (_state.Phase != GamePhase.Playing) return;
 
-        // Plantele cresc de 4 ori mai repede
         double acceleratedDelta = deltaMs * 4.0;
         foreach (var bed in GardenBeds)
         {
             bed?.Update(acceleratedDelta);
         }
 
-        // Clienții așteaptă de 3 ori mai mult
         double slowedDelta = deltaMs / 3.0;
         for (int i = _customers.Count - 1; i >= 0; i--)
         {
@@ -135,12 +147,16 @@ public class GameLogic : IDisposable
             _ => "Magic Cabbage"
         };
 
-        if (_counts[officialName] < 2) return false;
+        int requiredIngredients = 2;
+        if (_state.ShopLevel == 2) requiredIngredients = 3;
+        else if (_state.ShopLevel >= 3) requiredIngredients = 4;
 
-        _counts[officialName] -= 2;
+        if (_counts[officialName] < requiredIngredients) return false;
 
-        try { ((dynamic)_ingredients).RemoveItem(officialName, 2); }
-        catch { try { ((dynamic)_ingredients).Remove(officialName, 2); } catch { } }
+        _counts[officialName] -= requiredIngredients;
+
+        try { ((dynamic)_ingredients).RemoveItem(officialName, requiredIngredients); }
+        catch { try { ((dynamic)_ingredients).Remove(officialName, requiredIngredients); } catch { } }
 
         string basePotionName = recipeIndex switch { 0 => "Speed Potion", 1 => "Fire Potion", 2 => "Sun Potion", _ => "Nature Potion" };
 
@@ -149,6 +165,10 @@ public class GameLogic : IDisposable
 
         _state.PotionsCrafted++;
         _state.Score += 10;
+
+        // Verificăm și salvăm dacă noul scor a bătut recordul
+        CheckAndSaveHighScore();
+
         return true;
     }
 
@@ -167,7 +187,6 @@ public class GameLogic : IDisposable
                 string displayName = $"{name} x{count}";
                 int price = i switch { 0 => 80, 1 => 100, 2 => 90, _ => 70 };
 
-                // REPARARE 3: Trimitem direct culoarea din rețetă fără proprietăți lipsă
                 try { _potionsInStock.Add(new Potion(displayName, "Description", price, recipe.Color)); }
                 catch { _potionsInStock.Add((dynamic)new Potion(displayName, "Description", price, recipe.Color)); }
             }
@@ -203,13 +222,29 @@ public class GameLogic : IDisposable
         _state.CustomersServed++;
         _customers.RemoveAt(customerIndex);
 
-        if (_state.Score > _state.HighScore)
-            _state.HighScore = _state.Score;
+        // Verificăm și salvăm dacă noul scor a bătut recordul
+        CheckAndSaveHighScore();
 
         if (_state.Gold >= _state.UpgradeCost && _state.CanUpgradeShop)
             UpgradeShop();
 
         return gold;
+    }
+
+    // Funcție dedicată pentru a verifica și a scrie pe disk cel mai bun scor
+    private void CheckAndSaveHighScore()
+    {
+        if (_state.Score > _state.HighScore)
+        {
+            _state.HighScore = _state.Score;
+        }
+
+        try
+        {
+            // Salvăm High Score-ul în fișier pentru a fi reținut permanent
+            File.WriteAllText(HighScoreFile, _state.HighScore.ToString());
+        }
+        catch { }
     }
 
     public void UpgradeShop()
@@ -218,7 +253,16 @@ public class GameLogic : IDisposable
         _state.Gold -= _state.UpgradeCost;
         _state.ShopLevel++;
         _state.Score += 100;
-        if (_state.HasWon) _state.Phase = GamePhase.Victory;
+
+        // Verificăm și salvăm din nou scorul după bonusul de upgrade
+        CheckAndSaveHighScore();
+
+        if (_state.HasWon)
+        {
+            _state.Phase = GamePhase.Victory;
+            // Forțăm salvarea recordului la momentul victoriei
+            CheckAndSaveHighScore();
+        }
     }
 
     public void PlantSeed(int bedIndex, int plantType)
@@ -247,4 +291,3 @@ public class GameLogic : IDisposable
         }
     }
 }
-// end AI-generated

@@ -1,4 +1,4 @@
-// AI-generated
+
 using Silk.NET.SDL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -459,4 +459,3 @@ public unsafe class GameRenderer : IDisposable
         }
     }
 }
-// end AI-generated
