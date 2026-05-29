@@ -6,7 +6,6 @@ using SilkKeyCode = TheAdventure.KeyCode;
 
 var sdlContext = new TheAdventure.SdlContext();
 var sdl = new Sdl(sdlContext);
-
 var sdlInitResult = sdl.Init(Sdl.InitVideo | Sdl.InitEvents | Sdl.InitTimer);
 if (sdlInitResult < 0)
     throw new InvalidOperationException("Failed to initialize SDL.");
@@ -56,6 +55,11 @@ while (!quit)
 
             if (state.Phase == GamePhase.Playing)
             {
+                // Calculăm dinamic numărul necesar în funcție de nivelul magazinului curent
+                int required = 2;
+                if (logic.State.ShopLevel == 2) required = 3;
+                else if (logic.State.ShopLevel >= 3) required = 4;
+
                 // ==================== STRATUL 1 (Tasta 1) ====================
                 if (key == SilkKeyCode.One)
                 {
@@ -77,7 +81,7 @@ while (!quit)
                     else if (keyboardState[(int)SilkKeyCode.C] > 0)
                     {
                         if (logic.CraftPotion(0)) notificationMessage = "Crafted Speed Potion!";
-                        else notificationMessage = "Need 2 Magic Carrots!";
+                        else notificationMessage = $"Need {required} Magic Carrots!";
                     }
                     else
                     {
@@ -106,7 +110,7 @@ while (!quit)
                     else if (keyboardState[(int)SilkKeyCode.C] > 0)
                     {
                         if (logic.CraftPotion(1)) notificationMessage = "Crafted Fire Potion!";
-                        else notificationMessage = "Need 2 Magic Tomatoes!";
+                        else notificationMessage = $"Need {required} Magic Tomatoes!";
                     }
                     else
                     {
@@ -135,7 +139,7 @@ while (!quit)
                     else if (keyboardState[(int)SilkKeyCode.C] > 0)
                     {
                         if (logic.CraftPotion(2)) notificationMessage = "Crafted Sun Potion!";
-                        else notificationMessage = "Need 2 Magic Corn!";
+                        else notificationMessage = $"Need {required} Magic Corn!";
                     }
                     else
                     {
@@ -164,7 +168,7 @@ while (!quit)
                     else if (keyboardState[(int)SilkKeyCode.C] > 0)
                     {
                         if (logic.CraftPotion(3)) notificationMessage = "Crafted Nature Potion!";
-                        else notificationMessage = "Need 2 Magic Cabbage!";
+                        else notificationMessage = $"Need {required} Magic Cabbage!";
                     }
                 }
                 else if (key == SilkKeyCode.U && state.CanUpgradeShop)
